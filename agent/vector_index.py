@@ -83,6 +83,12 @@ class VectorIndex:
     # ── mutation ───────────────────────────────────────────────────────────
 
     def add(self, item_id: str, embedding: list[float]) -> None:
+        # Guard: do not add the same item_id twice. FAISS has no concept of
+        # unique IDs — duplicates silently waste an index slot and cause the
+        # same item to appear twice in search results at identical scores,
+        # consuming a top-k slot that could belong to a relevant item.
+        if item_id in self._ids:
+            return
         vec = _l2_normalize(np.array(embedding, dtype=np.float32))
         if self._index is None:
             self._dim = vec.shape[0]

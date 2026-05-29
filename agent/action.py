@@ -62,7 +62,7 @@ async def execute(
     text = _result_to_text(result)
     nbytes = len(text.encode("utf-8"))
 
-    if nbytes > ARTIFACT_THRESHOLD_BYTES:
+    if nbytes > ARTIFACT_THRESHOLD_BYTES or tool_call.name in ("web_search", "search_knowledge"):
         art_id = artifacts.put(
             text.encode("utf-8"),
             content_type="text/plain",

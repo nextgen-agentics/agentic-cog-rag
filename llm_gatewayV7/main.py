@@ -28,7 +28,7 @@ PORT = int(os.getenv("GATEWAY_V7_PORT", "8107"))
 # long-context Gemini; HUGE is rejected (Summarizer Agent will live in V7).
 TIER_TO_ORDER = {
     "TINY":  ["github", "openrouter", "groq", "nvidia", "cerebras", "wandb", "gemini", "ollama"],
-    "LARGE": ["gemini", "wandb", "groq", "nvidia", "cerebras", "github", "openrouter", "ollama"],
+    "LARGE": ["gemini", "groq", "cerebras", "github", "openrouter", "nvidia", "wandb","ollama"],
 }
 
 # Router envelope: cap the sample at ~800 chars (first 400 + last 400).

@@ -100,10 +100,12 @@ async def run(query: str) -> str:
 
                 # 2. PERCEPTION
                 obs = perception.observe(query, hits, history, prior_goals, run_id)
+                # breakpoint()
+
                 prior_goals = obs.goals
                 for g in obs.goals:
                     flag = "✓" if g.done else "○"
-                    attach = f"  attach={g.attach_artifact_id}" if g.attach_artifact_id else ""
+                    attach = (f"  attach={g.attach_artifact_ids}" if g.attach_artifact_ids else "")
                     print(f"[perception]    {flag} {g.id} — {g.text}{attach}")
 
                 if obs.all_done:
@@ -115,15 +117,17 @@ async def run(query: str) -> str:
                     print(f"\n[done] no unfinished goal — stopping")
                     break
 
-                # Perception decided whether to attach an artifact.
+                # Perception decided whether to attach one or more artifacts.
                 attached: list[tuple[str, bytes]] = []
-                if goal.attach_artifact_id and artifacts.exists(goal.attach_artifact_id):
-                    blob = artifacts.get_bytes(goal.attach_artifact_id)
-                    attached.append((goal.attach_artifact_id, blob))
-                    print(f"[attach]        {goal.attach_artifact_id} ({len(blob)} bytes)")
+                for art_id in goal.attach_artifact_ids:
+                    if artifacts.exists(art_id):
+                        blob = artifacts.get_bytes(art_id)
+                        attached.append((art_id, blob))
+                        print(f"[attach]        {art_id} ({len(blob)} bytes)")
 
                 # 3. DECISION
                 out = decision.next_step(goal, hits, attached, history, tools_for_decision)
+                # breakpoint()
 
                 if out.is_answer:
                     print(f"[decision]      ANSWER: {out.answer[:200]}{'...' if len(out.answer) > 200 else ''}")

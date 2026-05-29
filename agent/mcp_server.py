@@ -173,7 +173,11 @@ async def _crawl4ai_fetch(url: str) -> dict:
 
 @mcp.tool()
 def web_search(query: str, max_results: int = 5) -> list[dict]:
-    """Search the web (Tavily primary, DDG fallback). Hard-capped at 5 results. Example: web_search("python asyncio tutorial", 3)."""
+    """Search the web and return up to max_results result snippets (title, URL, short excerpt).
+    Snippets are brief summaries — they do NOT contain the full text of the source page.
+    To read the complete content of a URL from these results, call fetch_url next.
+    Hard-capped at 5 results (Tavily primary, DuckDuckGo fallback).
+    Example: web_search("python asyncio tutorial", 3)."""
     max_results = max(1, min(max_results, MAX_SEARCH_RESULTS))
     if os.environ.get("TAVILY_API_KEY") and _under_cap("tavily"):
         try:
@@ -190,7 +194,11 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
 
 @mcp.tool()
 async def fetch_url(url: str, timeout: int = 20) -> dict:
-    """Fetch clean markdown from a URL via crawl4ai (headless Chromium). Example: fetch_url("https://example.com")."""
+    """Fetch full clean markdown from an http:// or https:// URL via headless browser (crawl4ai).
+    NEVER pass an art: artifact handle as the url argument — artifact content is already
+    available in ATTACHED ARTIFACTS and is not accessible through this tool.
+    Only use with real http:// or https:// web URLs.
+    Example: fetch_url("https://example.com")."""
     return await _crawl4ai_fetch(url)
 
 
@@ -233,7 +241,11 @@ def currency_convert(amount: float, from_currency: str, to_currency: str) -> dic
 
 @mcp.tool()
 def read_file(path: str) -> dict:
-    """Read a UTF-8 text file from the sandbox. Example: read_file("notes.txt")."""
+    """Read a UTF-8 text file from the local sandbox directory.
+    NEVER pass an art: artifact handle as the path argument — artifact content is already
+    available in ATTACHED ARTIFACTS and is not accessible through this tool.
+    Only use for real sandbox files identified by filename.
+    Example: read_file("notes.txt")."""
     p = _safe(path)
     text = p.read_text(encoding="utf-8")
     return {
@@ -315,11 +327,45 @@ def edit_file(path: str, find: str, replace: str, replace_all: bool = False) -> 
 # ── document indexing (Session 7) ───────────────────────────────────────────
 
 def _read_for_index(path: str) -> tuple[str, str]:
-    """Return (content, source_label) for an indexable file or artifact."""
+    """Return (content, source_label) for an indexable file or artifact.
+    For academic paper abstract pages, we strip arXiv boilerplate and index
+    only the Title, Authors, and Abstract to maximize retrieval precision.
+    """
     if path.startswith("art:"):
-        return _artifacts.get_bytes(path).decode("utf-8", errors="replace"), path
-    p = _safe(path)
-    return p.read_text(encoding="utf-8"), f"sandbox:{path}"
+        text = _artifacts.get_bytes(path).decode("utf-8", errors="replace")
+        source = path
+    else:
+        p = _safe(path)
+        text = p.read_text(encoding="utf-8")
+        source = f"sandbox:{path}"
+
+    # Smart academic parsing: extract Title, Authors, Abstract if present.
+    # This filters out hundreds of lines of Cornell/Simons/scite/HuggingFace links.
+    text_lc = text.lower()
+    if "abstract:" in text_lc and "title:" in text_lc:
+        lines = text.splitlines()
+        title_line = ""
+        authors_line = ""
+        abstract_line = ""
+        for line in lines:
+            line_lc = line.lower()
+            if "title:" in line_lc and not title_line:
+                title_line = line.strip()
+            elif "authors:" in line_lc and not authors_line:
+                authors_line = line.strip()
+            elif "abstract:" in line_lc and not abstract_line:
+                abstract_line = line.strip()
+        
+        # Build clean indexable academic core
+        parts = []
+        if title_line: parts.append(title_line)
+        if authors_line: parts.append(authors_line)
+        if abstract_line: parts.append(abstract_line)
+        if parts:
+            clean_text = "\n".join(parts)
+            return clean_text, source
+
+    return text, source
 
 
 def _chunk_text(text: str, size: int = 400, overlap: int = 80) -> list[str]:
@@ -374,14 +420,20 @@ def index_document(path: str, chunk_size: int = 400, overlap: int = 80) -> dict:
 
 @mcp.tool()
 def search_knowledge(query: str, k: int = 5) -> list[dict]:
-    """Vector search over indexed `fact` chunks. Returns up to k ranked chunks with provenance. Call this rather than re-fetching URLs or re-reading source files whenever Memory already contains indexed chunks for the topic — that is the whole point of having indexed the corpus. Example: search_knowledge("authentication flow", 5)."""
+    """Vector search over fact chunks indexed by index_document in this session.
+    Returns up to k ranked chunks with provenance and source metadata.
+    PREREQUISITE: index_document must have been called first to populate the index.
+    If no index_document call was made in the current session, this tool returns empty
+    results — do not call it speculatively. Use this instead of re-fetching URLs or
+    re-reading source files when Memory already contains indexed chunks for the topic.
+    Example: search_knowledge("authentication flow", 5)."""
     items = _memory.read(query, kinds=["fact"], top_k=k)
     return [
         {
             "id": item.id,
             "descriptor": item.descriptor,
             "source": item.source,
-            "chunk_preview": (item.value.get("chunk") or "")[:240],
+            "chunk": item.value.get("chunk") or "",
             "metadata": {k_: v for k_, v in item.value.items() if k_ != "chunk"},
         }
         for item in items

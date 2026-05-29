@@ -463,6 +463,18 @@ class GeminiProvider(BaseProvider):
                 # Reused an existing cache entry — count its tokens as cache_read.
                 cache_read_tokens = len(cacheable_text) // 4
 
+        # Gemini API hard constraint: cachedContent cannot appear in the same
+        # GenerateContent request as tools, tool_config, or system_instruction.
+        # Reference: https://ai.google.dev/api/caching
+        # Decision always passes tools=mcp_tools, so proactively skip the cache
+        # rather than letting the first request 400 and pay a retry round-trip.
+        # The existing retry-on-400 logic handles unexpected cases, but this
+        # avoidance path is the correct primary path.
+        if cache_name and tools:
+            cache_name = None
+            cache_create_tokens = 0
+            cache_read_tokens = 0
+
         body: dict[str, Any] = {
             "contents": self._translate_messages(messages),
             "generationConfig": {"maxOutputTokens": max_tokens, "temperature": temperature},

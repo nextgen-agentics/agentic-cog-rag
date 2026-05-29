@@ -64,7 +64,15 @@ class Goal(BaseModel):
     id: str
     text: str
     done: bool = False
-    attach_artifact_id: str | None = None        # Perception sets this when the goal needs raw bytes
+    # Perception sets these when the goal needs raw bytes attached.
+    # Multiple IDs are supported so synthesis goals can read N fetched pages
+    # at once without chaining through intermediate steps.
+    attach_artifact_ids: list[str] = Field(default_factory=list)
+
+    @property
+    def attach_artifact_id(self) -> str | None:
+        """Backward-compat: return the first attached artifact id, or None."""
+        return self.attach_artifact_ids[0] if self.attach_artifact_ids else None
 
 
 class Observation(BaseModel):
