@@ -819,69 +819,691 @@ Both approaches emphasize improved interpretability, but ReAct generates "human-
 
 ## 🧠 Five Custom RAG Traces (Retrieval vs. No-Corpus)
 
-To validate the indexing logic and vector recall, five queries were designed. Each succeeds with access to the indexed scientific papers corpus and fails without it.
+To validate the indexing logic and vector recall, five queries were designed. Each succeeds with access to the indexed scientific papers corpus and fails without it (use web search if it fails).
 
-### Query 1: Scalp Signal Preprocessing (Semantic Recall)
-*   **Verbatim Query**: *“Explain the process of standardizing scalp brain signal inputs before feeding them to networks.”*
-*   **Type**: **Semantic Recall** (Keywords: "standardizing", "scalp brain signal inputs", "feeding them to networks" do not appear literally in the chunks which are index-tagged as "PREP pipeline", "preprocessing", "electrode normalization").
+### Query 1
+*   **Query**: *What are the common prepreprocessing steps in eeg foundation models?*
 *   **With RAG (Success)**:
-    ```text
-    Retrieves chunk from sandbox:eeg_papers/180 (The PREP pipeline). 
-    Correctly explains the three sub-stages (amplitude detrending, line-noise removal via spectral filtering, and robust average reference estimation).
-    ```
-*   **Without RAG (Failure)**:
-    ```text
-    Fails to provide the specific steps of the standardized PREP pipeline or general EEG-specific parameters. Returns generic text-model preprocessing recommendations or hallucinates standard LLM normalization techniques.
-    ```
+```text
+agent7> what are the common prepreprocessing steps in eeg foundation models?
 
-### Query 2: Voltage Charts Adaptation Challenges (Semantic Recall)
-*   **Verbatim Query**: *“What are the key obstacles when adapting models trained on written text to biological voltage charts?”*
-*   **Type**: **Semantic Recall** (Keywords: "obstacles", "biological voltage charts", "written text" do not appear literally in the source chunks which refer to "spatial-temporal signal alignment", "multichannel dimensional scaling", "high signal-to-noise ratio in clinical EEG").
-*   **With RAG (Success)**:
-    ```text
-    Retrieves chunks from sandbox:eeg_papers/512 (Are EEG FMs worth it?) and sandbox:eeg_papers/96.
-    Points to concrete clinical/scientific issues: lack of predefined token boundaries, high non-stationarity across sessions, and spatial channel configuration discrepancies.
-    ```
-*   **Without RAG (Failure)**:
-    ```text
-    Provides abstract analogies about time-series data or neural networks but completely misses the domain-specific challenges of electrode configurations and cross-dataset calibration covered in the papers.
-    ```
+══════════════════════════════════════════════════════════════════════════════
+run ff8dbd27  ─  query: what are the common prepreprocessing steps in eeg foundation models?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:05:03] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
 
-### Query 3: LEAD Foundation Model Analysis (Explicit)
-*   **Verbatim Query**: *“What is the main architecture and performance of the LEAD foundation model on Alzheimer's Disease detection?”*
-*   **Type**: **Explicit Retrieval**
-*   **With RAG (Success)**:
-    ```text
-    Retrieves chunk from sandbox:eeg_papers/478 (LEAD An EEG Foundation Model).
-    Identifies the specialized temporal-spectral attention scaling blocks and lists the precise clinical diagnostic performance scores.
-    ```
-*   **Without RAG (Failure)**:
-    ```text
-    Fails completely or hallucinates that LEAD stands for general medical training procedures, stating it cannot locate any papers describing a model called "LEAD" in standard pretrained datasets.
-    ```
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:6308d965 — Query the knowledge base for common preprocessing steps used in EEG foundation models
+[perception]    ○ g:a9743446 — Synthesise the common preprocessing steps for EEG foundation models based on the knowledge base findings
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "common preprocessing steps used in EEG foundation models"})
+[05/30/26 12:05:07] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[05/30/26 12:05:08] INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:d0067ffc78f95c6e, 7345 bytes] preview: {   "id": "mem:6b8cb675",   "descriptor": "Common preprocessing steps used in EEG foundation models",   "source": "user_query",   "chunk": "",   "m...   +art:d0067ffc78f95c6e
 
-### Query 4: CEReBrO Representation Model (Explicit)
-*   **Verbatim Query**: *“How does the compact encoder model CEReBrO represent brain signals compared to massive architectures?”*
-*   **Type**: **Explicit Retrieval**
-*   **With RAG (Success)**:
-    ```text
-    Retrieves chunk from sandbox:eeg_papers/230 (CEReBrO Compact Encoder).
-    Explains the lightweight channel-attention block and how it achieves comparable performance to giant models with 90% fewer parameters.
-    ```
-*   **Without RAG (Failure)**:
-    ```text
-    Explains general brain-computer interface architectures or guesses what the acronym might mean, completely missing the specific paper's quantitative results.
-    ```
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:6308d965 — Query the knowledge base for common preprocessing steps used in EEG foundation models
+[perception]    ○ g:a9743446 — Synthesise the common preprocessing steps for EEG foundation models based on the knowledge base findings  attach=['art:d0067ffc78f95c6e']
+[attach]        art:d0067ffc78f95c6e (7345 bytes)
+[decision]      TOOL_CALL: search_knowledge({"query": "EEG preprocessing steps filtering normalization epoching montage", "k": 5})
+[05/30/26 12:05:23] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:4ec8850ade2640e3, 22171 bytes] preview: {   "id": "mem:28eb2e98",   "descriptor": "[sandbox:docs/markdown/180/Bigdely-Shamlo et al. - 2015 - The PREP pipeline standardized preprocessing ...   +art:4ec8850ade2640e3
 
-### Query 5: EEG-FM-Bench Benchmark Results (Explicit)
-*   **Verbatim Query**: *“What are the conclusions of the EEG-FM-Bench paper regarding the performance of self-supervised models on clinical tasks?”*
-*   **Type**: **Explicit Retrieval**
-*   **With RAG (Success)**:
-    ```text
-    Retrieves chunk from sandbox:eeg_papers/483 (EEG-FM-Bench).
-    Accurately details the benchmark's findings on which pretraining tasks (masked reconstruction vs. contrastive learning) perform best on specific clinical downstream tasks.
-    ```
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:6308d965 — Query the knowledge base for common preprocessing steps used in EEG foundation models
+[perception]    ○ g:a9743446 — Synthesise the common preprocessing steps for EEG foundation models based on the knowledge base findings  attach=['art:d0067ffc78f95c6e', 'art:4ec8850ade2640e3']
+[attach]        art:d0067ffc78f95c6e (7345 bytes)
+[attach]        art:4ec8850ade2640e3 (22171 bytes)
+[decision]      Prompt size is large (40781 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: Based on the provided knowledge base, preprocessing for EEG foundation models is not yet fully standardized, often involving inconsistent implementation details that can impact downstream performance....
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:6308d965 — Query the knowledge base for common preprocessing steps used in EEG foundation models
+[perception]    ✓ g:a9743446 — Synthesise the common preprocessing steps for EEG foundation models based on the knowledge base findings
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the provided knowledge base, preprocessing for EEG foundation models is not yet fully standardized, often involving inconsistent implementation details that can impact downstream performance. Common steps and considerations include:
+
+*   **Segmentation and Epoching:** Data is typically divided into segments (e.g., 1-second epochs), which may be interpolated to match specific durations required by the model (e.g., 4s or 10s).
+*   **Montage and Channel Alignment:** Models often require specific montages (e.g., bipolar vs. standard single-channel). Downstream datasets must be remapped to match the pre-training montage or supplemented with a convolutional layer to learn the mapping.
+*   **Positional and Channel Embeddings:** Models may use specific spatial-temporal embeddings (e.g., ACPE). When datasets have different channel configurations than the pre-training data, fine-tuning is often required to learn new channel embeddings.
+*   **Artifact Handling and Standardization:** While foundational models aim to learn robust representations, standard early-stage preprocessing—such as high-pass filtering, line noise removal, referencing, and bad channel interpolation—remains critical. Automated pipelines (like PREP) are used to standardize data by detecting and removing experimental artifacts (e.g., electrical interference) while attempting to preserve subject-generated signals.
+*   **Tokenization and Fusion:** The choice of token fusion strategy and how patch tokens are handled (e.g., discarding them after the encoder or relying solely on a [CLS] token) are key methodological factors that vary across models and significantly influence performance.
+*   **Normalization:** Amplitude-based features often vary across headsets and sessions, necessitating normalization to reduce cross-session/subject/headset variations, though this must be balanced against the risk of removing useful signal information.
+══════════════════════════════════════════════════════════════════════════════
+
+```
 *   **Without RAG (Failure)**:
-    ```text
-    Suggests searching a scientific database or states that standard base models do not have historical knowledge of a benchmark called "EEG-FM-Bench" published in 2026.
-    ```
+```text
+agent7> what are the common prepreprocessing steps in eeg foundation models?
+
+══════════════════════════════════════════════════════════════════════════════
+run 6e76a8ae  ─  query: what are the common prepreprocessing steps in eeg foundation models?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:12:58] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   1 hits
+[perception]    ○ g:7024ad78 — Answer what the common preprocessing steps in EEG foundation models are based on the knowledge base.
+[decision]      TOOL_CALL: web_search({"max_results": 5, "query": "EEG foundation model preprocessing steps"})
+[05/30/26 12:13:04] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=EEG%20foundation%20model%20preprocessing%20st           
+                             eps 200                                                                                                                                   
+[05/30/26 12:13:06] INFO     response: https://grokipedia.com/api/typeahead?query=EEG+foundation+model+preprocessing+steps&limit=1 200                       lib.rs:495
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://www.google.com/search?q=EEG+foundation+model+preprocessing+steps&filter=1&start=0&hl=en-US&lr=lang_en&cr=countryUS 200            
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://search.yahoo.com/search;_ylt=4WJ6C5p-WqRnOU4UXpE3FVBJ;_ylu=LURadLIyTfK4MPacICUkb-Bysi-rMqzpNomuJ5zjCBArs4c?p=EEG+founda           
+                             tion+model+preprocessing+steps 200                                                                                                        
+[action]        → [artifact art:b9589e58075590db, 1900 bytes] preview: {   "title": "2. Preprocessing — Introduction to EEG analysis",   "url": "https://alexenge.github.io/intro-to-eeg/ipynb/2-preprocessing.html",   "s...   +art:b9589e58075590db
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   2 hits
+[perception]    ○ g:7024ad78 — Answer what the common preprocessing steps in EEG foundation models are based on the knowledge base.  attach=['art:b9589e58075590db']
+[attach]        art:b9589e58075590db (1900 bytes)
+[decision]      TOOL_CALL: fetch_url({"url": "https://iopscience.iop.org/article/10.1088/1741-2552/ae4455"})
+[05/30/26 12:13:21] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://iopscience.iop.org/article/10.1088/1741-2552/ae4455                                          | ✓ | ⏱: 3.14s 
+[SCRAPE].. ◆ https://iopscience.iop.org/article/10.1088/1741-2552/ae4455                                          | ✓ | ⏱: 0.01s 
+[COMPLETE] ● https://iopscience.iop.org/article/10.1088/1741-2552/ae4455                                          | ✓ | ⏱: 3.15s 
+[action]        → {   "status": 302,   "content_type": "text/markdown",   "length_bytes": 465,   "text": "  \n\n![Captcha Page](https://cdn.images.iop.org/website-logos/IOP-Publishing-300x83.jpg)\n## We apologize for t...
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   3 hits
+[perception]    ○ g:7024ad78 — Answer what the common preprocessing steps in EEG foundation models are based on the knowledge base.  attach=['art:b9589e58075590db']
+[attach]        art:b9589e58075590db (1900 bytes)
+[decision]      TOOL_CALL: fetch_url({"url": "https://nimbusbci.com/blog/eeg-foundation-model-reve-nimbus-studio-preprocessing"})
+[05/30/26 12:13:32] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://nimbusbci.com/blog/eeg-foundation-model-reve-nimbus-studio-preprocessing                     | ✓ | ⏱: 3.36s 
+[SCRAPE].. ◆ https://nimbusbci.com/blog/eeg-foundation-model-reve-nimbus-studio-preprocessing                     | ✓ | ⏱: 0.01s 
+[COMPLETE] ● https://nimbusbci.com/blog/eeg-foundation-model-reve-nimbus-studio-preprocessing                     | ✓ | ⏱: 3.39s 
+[action]        → [artifact art:edc1f31a33ad4bed, 12273 bytes] preview: {   "status": 307,   "content_type": "text/markdown",   "length_bytes": 12107,   "text": "[![Nimbus](https://www.nimbusbci.com/assets/logos/Nimbus...   +art:edc1f31a33ad4bed
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   4 hits
+[perception]    ○ g:7024ad78 — Answer what the common preprocessing steps in EEG foundation models are based on the knowledge base.  attach=['art:b9589e58075590db', 'art:edc1f31a33ad4bed']
+[attach]        art:b9589e58075590db (1900 bytes)
+[attach]        art:edc1f31a33ad4bed (12273 bytes)
+[decision]      ANSWER: Common preprocessing steps in EEG foundation models typically include: bandpass and notch filtering for frequency-domain cleanup, EOG removal to suppress ocular artifacts, CSP/FBCSP for discriminative...
+
+─── iter 5 ─────────────────────────────────────────────
+[memory.read]   4 hits
+[perception]    ✓ g:7024ad78 — Answer what the common preprocessing steps in EEG foundation models are based on the knowledge base.
+
+[done] all 1 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Common preprocessing steps in EEG foundation models typically include: bandpass and notch filtering for frequency-domain cleanup, EOG removal to suppress ocular artifacts, CSP/FBCSP for discriminative spatial filtering, real‑time compatible causal processing, and a foundation‑model layer (e.g., REVE) that learns representation extraction from the filtered signal.
+══════════════════════════════════════════════════════════════════════════════
+```
+
+### Query 2:
+*   **Query**: *What are the limitation of eeg foundation models?*
+*   **With RAG (Success)**:
+```text
+agent7> what are the limitation of eeg foundation models?
+
+══════════════════════════════════════════════════════════════════════════════
+run 9fc070a7  ─  query: what are the limitation of eeg foundation models?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:08:08] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:e5536c3d — Query knowledge base for limitations of EEG foundation models
+[perception]    ○ g:ad028951 — Answer the limitations of EEG foundation models based on the knowledge base
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "limitations of EEG foundation models"})
+[05/30/26 12:08:11] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:0a4969fc8740ebec, 10023 bytes] preview: {   "id": "mem:facf466b",   "descriptor": "Inquiry regarding the limitations of EEG foundation models",   "source": "user_query",   "chunk": "",  ...   +art:0a4969fc8740ebec
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:e5536c3d — Query knowledge base for limitations of EEG foundation models
+[perception]    ○ g:ad028951 — Answer the limitations of EEG foundation models based on the knowledge base  attach=['art:0a4969fc8740ebec']
+[attach]        art:0a4969fc8740ebec (10023 bytes)
+[decision]      ANSWER: Based on the knowledge base, the limitations of EEG foundation models include:
+
+**Performance Limitations:**
+- Foundation models do not inherently outperform well-established classic neural network ap...
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:e5536c3d — Query knowledge base for limitations of EEG foundation models
+[perception]    ✓ g:ad028951 — Answer the limitations of EEG foundation models based on the knowledge base
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the knowledge base, the limitations of EEG foundation models include:
+
+**Performance Limitations:**
+- Foundation models do not inherently outperform well-established classic neural network approaches
+- Only the largest fully fine-tuned architectures (e.g., ST-EEGFormer-l) achieve performance levels equal to or surpassing traditional models
+- Linear-probed foundation models consistently underperform across all evaluation protocols
+- On regression tasks, classic decoders often outperform fine-tuned foundation models
+
+**Representation Learning Issues:**
+- Current pre-training strategies do not produce EEG representations that are sufficiently generalizable and discriminative across a broad range of BCI tasks
+- Learned representations depend heavily on task-specific adaptation—attention-weight visualizations show regions of interest change substantially after fine-tuning
+
+**Scaling Challenges:**
+- No clear scaling law exists for downstream EEG classification tasks (poor logarithmic fit between model size and accuracy)
+- Training time per EEG epoch grows exponentially with model size, meaning computational costs scale much faster than accuracy improvements
+
+**Generalization Variability:**
+- Performance varies significantly across different evaluation protocols (population-level, per-subject, leave-one-out scenarios)
+- Classic neural and non-neural decoders show more variable results depending on the evaluation setting, but foundation models don't consistently demonstrate superior generalization
+══════════════════════════════════════════════════════════════════════════════
+```
+*   **Without RAG (Failure)**:
+```text
+agent7> what are the limitation of eeg foundation models?
+
+══════════════════════════════════════════════════════════════════════════════
+run 554fde97  ─  query: what are the limitation of eeg foundation models?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:14:58] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   5 hits
+[perception]    ○ g:5b4f7c80 — Query the knowledge base for limitations of EEG foundation models
+[perception]    ○ g:c87d6b35 — Summarise the limitations of EEG foundation models based on the findings
+[decision]      TOOL_CALL: web_search({"max_results": 5, "query": "EEG foundation model limitations"})
+[05/30/26 12:15:04] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     response: https://grokipedia.com/api/typeahead?query=EEG+foundation+model+limitations&limit=1 200                               lib.rs:495
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=EEG%20foundation%20model%20limitations 200              
+[05/30/26 12:15:06] INFO     response: https://www.mojeek.com/search?q=EEG+foundation+model+limitations 200                                                  lib.rs:495
+[action]        → [artifact art:381596e0b368e71b, 1455 bytes] preview: {   "title": "EEG Foundation Models: A Critical Review of Current Progress",   "url": "https://arxiv.org/html/2507.11783v2",   "snippet": "Similar ...   +art:381596e0b368e71b
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   6 hits
+[perception]    ✓ g:5b4f7c80 — Query the knowledge base for limitations of EEG foundation models
+[perception]    ○ g:c87d6b35 — Summarise the limitations of EEG foundation models based on the findings  attach=['art:381596e0b368e71b']
+[attach]        art:381596e0b368e71b (1455 bytes)
+[decision]      TOOL_CALL: fetch_url({"url": "https://arxiv.org/html/2507.11783v2"})
+[05/30/26 12:15:09] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://arxiv.org/html/2507.11783v2                                                                  | ✓ | ⏱: 2.06s 
+[SCRAPE].. ◆ https://arxiv.org/html/2507.11783v2                                                                  | ✓ | ⏱: 0.33s 
+[COMPLETE] ● https://arxiv.org/html/2507.11783v2                                                                  | ✓ | ⏱: 2.41s 
+[action]        → [artifact art:ec17334bf2b918a0, 171835 bytes] preview: {   "status": 200,   "content_type": "text/markdown",   "length_bytes": 170805,   "text": "[ ![logo](https://services.dev.arxiv.org/html/static/a...   +art:ec17334bf2b918a0
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   7 hits
+[perception]    ✓ g:5b4f7c80 — Query the knowledge base for limitations of EEG foundation models
+[perception]    ○ g:c87d6b35 — Summarise the limitations of EEG foundation models based on the findings  attach=['art:381596e0b368e71b', 'art:ec17334bf2b918a0']
+[attach]        art:381596e0b368e71b (1455 bytes)
+[attach]        art:ec17334bf2b918a0 (171835 bytes)
+[decision]      Prompt size is large (41908 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: Based on the provided review of first-generation EEG foundation models (EEG-FMs), the primary limitations are as follows:
+
+*   **Heterogeneous and Limited Evaluation:** Model evaluations are inconsist...
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   7 hits
+[perception]    ✓ g:5b4f7c80 — Query the knowledge base for limitations of EEG foundation models
+[perception]    ✓ g:c87d6b35 — Summarise the limitations of EEG foundation models based on the findings
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the provided review of first-generation EEG foundation models (EEG-FMs), the primary limitations are as follows:
+
+*   **Heterogeneous and Limited Evaluation:** Model evaluations are inconsistent and largely restricted to common public datasets. This makes it difficult to assess their practical, off-the-shelf utility or generalizability to real-world clinical and scientific settings.
+*   **Data Variability and Robustness:** EEG data is inherently noisy and highly variable across recording sites, acquisition systems, subjects, and sessions. Early models struggle with this variability, raising concerns about their robustness and transferability to new tasks or datasets.
+*   **Lack of Standardization:** There is significant variation in design choices, including input representations, architectural components, and self-supervised learning (SSL) pretext tasks. The impact of these choices on learned features and their relationship to brain physiology remains unclear.
+*   **Insufficient Scaling:** Current models have yet to demonstrate substantial scaling effects, which are a hallmark of successful foundation models in other domains like vision and language.
+*   **Developmental Maturity:** The field is still in its infancy, and there is a lack of established benchmarks, standardized software tools, and collaborative methodologies involving domain experts, which hinders their translational value and real-world adoption.
+══════════════════════════════════════════════════════════════════════════════
+```
+
+### Query 3: (Semantic Recall)
+*   **Query**: *Among the papers I have indexed, how do eeg foundation models perform on mental health downstream tasks?*
+*   **With RAG (Success)**:
+```text
+agent7> Among the papers I have indexed, how do eeg foundation models perform on mental health downstream tasks?
+
+══════════════════════════════════════════════════════════════════════════════
+run ffc41a0e  ─  query: Among the papers I have indexed, how do eeg foundation models perform on mental health downstream tasks?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:09:15] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:8b0523da — Query the knowledge base for performance of EEG foundation models on mental health downstream tasks
+[perception]    ○ g:8d68f528 — Synthesise how EEG foundation models perform on mental health downstream tasks based on the retrieved knowledge
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "EEG foundation models performance mental health downstream tasks"})
+[05/30/26 12:09:20] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:07927a984f85a82e, 30514 bytes] preview: {   "id": "mem:859717ef",   "descriptor": "[sandbox:docs/markdown/466/Kastrati et al. - 2025 - EEG-Bench A Benchmark for EEG Foundation Models in ...   +art:07927a984f85a82e
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:8b0523da — Query the knowledge base for performance of EEG foundation models on mental health downstream tasks
+[perception]    ○ g:8d68f528 — Synthesise how EEG foundation models perform on mental health downstream tasks based on the retrieved knowledge  attach=['art:07927a984f85a82e']
+[attach]        art:07927a984f85a82e (30514 bytes)
+[decision]      Prompt size is large (45468 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: Based on the retrieved benchmarks and evaluations, EEG foundation models currently face significant challenges in performing mental health downstream tasks compared to classical machine learning appro...
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:8b0523da — Query the knowledge base for performance of EEG foundation models on mental health downstream tasks
+[perception]    ✓ g:8d68f528 — Synthesise how EEG foundation models perform on mental health downstream tasks based on the retrieved knowledge
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the retrieved benchmarks and evaluations, EEG foundation models currently face significant challenges in performing mental health downstream tasks compared to classical machine learning approaches.
+
+Key findings include:
+
+*   **Underperformance on Clinical Tasks:** In comparative evaluations (such as those in *EEG-Bench*), foundation models like Neuro-GPT and LaBraM have struggled to outperform classical baselines like Support Vector Machines (SVM) and Linear Discriminant Analysis (LDA). For instance, in schizophrenia classification, SVM achieved higher performance (0.679) than foundation models (e.g., Neuro-GPT at 0.545 and LaBraM at 0.543).
+*   **Difficulty with Subtle Markers:** Deep learning-based foundation models often fail to capture meaningful patterns in psychiatric tasks. This is attributed to the subtle, distributed nature of EEG markers associated with conditions like schizophrenia, which may require more specialized training data or tailored inductive structures that current general-purpose foundation models lack.
+*   **Generalization and Channel Limitations:** Foundation models have shown severe limitations in tasks involving previously unseen EEG channels. In sleep staging and seizure detection tasks, models like BENDR and Neuro-GPT struggled to perform better than random guessing, likely because they were not trained on the specific channel configurations present in those datasets. While some models (e.g., LaBraM) show slightly better flexibility regarding channel variations, they still often fall short of classical baselines.
+*   **Need for Specialized Evaluation:** The field is shifting toward standardized benchmarking (e.g., *EEG-FM-Bench*, *EEG-Bench*) to address these gaps. Current research suggests that while foundation models hold promise for generalizable representations, they currently lack the robustness required for realistic clinical settings, and their performance is highly dependent on the specific downstream task and the alignment between pre-training data and clinical application requirements.
+══════════════════════════════════════════════════════════════════════════════
+```
+*   **Without RAG (Failure)**:
+```text
+agent7> Among the papers I have indexed, how do eeg foundation models perform on mental health downstream tasks?
+
+══════════════════════════════════════════════════════════════════════════════
+run 310b6b6f  ─  query: Among the papers I have indexed, how do eeg foundation models perform on mental health downstream tasks?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:16:05] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   7 hits
+[perception]    ○ g:611a4c6d — Query the knowledge base for how EEG foundation models perform on mental health downstream tasks
+[perception]    ○ g:007eb06e — Synthesise the information to answer how EEG foundation models perform on mental health downstream tasks
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "EEG foundation models mental health downstream tasks performance"})
+[05/30/26 12:16:10] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+[05/30/26 12:16:11] INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:6b97fef63dcbd0e1, 472 bytes] preview: {   "id": "mem:cd17c017",   "descriptor": "Inquiry regarding the limitations of EEG foundation models",   "source": "user_query",   "chunk": "",   "...   +art:6b97fef63dcbd0e1
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:611a4c6d — Query the knowledge base for how EEG foundation models perform on mental health downstream tasks
+[perception]    ○ g:007eb06e — Synthesise the information to answer how EEG foundation models perform on mental health downstream tasks  attach=['art:6b97fef63dcbd0e1']
+[attach]        art:6b97fef63dcbd0e1 (472 bytes)
+[decision]      TOOL_CALL: web_search({"query": "EEG foundation models mental health downstream tasks performance", "max_results": 5})
+[05/30/26 12:16:14] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[05/30/26 12:16:15] INFO     response: https://grokipedia.com/api/typeahead?query=EEG+foundation+models+mental+health+downstream+tasks+performance&limit=1   lib.rs:495
+                             200                                                                                                                                       
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=EEG%20foundation%20models%20mental%20health%2           
+                             0downstream%20tasks%20performance 200                                                                                                     
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://search.yahoo.com/search;_ylt=ZENFSpoy_PuU4bYwFikoA1oK;_ylu=-ax2a9kddXBiI0cMx9h7ah5XrV6Vamkgs3A63GBA7Ye9lEQ?p=EEG+founda           
+                             tion+models+mental+health+downstream+tasks+performance 200                                                                                
+[05/30/26 12:16:16] INFO     response: https://www.startpage.com/ 200                                                                                        lib.rs:495
+                    INFO     response: https://www.startpage.com/sp/search 200                                                                               lib.rs:495
+[action]        → [artifact art:51cd5a8c1605b1f2, 1569 bytes] preview: {   "title": "Bridging Pretrain–Downstream Task Misalignment in EEG ... - arXiv",   "url": "https://arxiv.org/html/2509.26301v1",   "snippet": "Sep...   +art:51cd5a8c1605b1f2
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:611a4c6d — Query the knowledge base for how EEG foundation models perform on mental health downstream tasks
+[perception]    ○ g:007eb06e — Synthesise the information to answer how EEG foundation models perform on mental health downstream tasks  attach=['art:6b97fef63dcbd0e1', 'art:51cd5a8c1605b1f2']
+[attach]        art:6b97fef63dcbd0e1 (472 bytes)
+[attach]        art:51cd5a8c1605b1f2 (1569 bytes)
+[decision]      TOOL_CALL: fetch_url({"url": "https://arxiv.org/html/2507.11783v3"})
+[05/30/26 12:16:20] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://arxiv.org/html/2507.11783v3                                                                  | ✓ | ⏱: 2.26s 
+[SCRAPE].. ◆ https://arxiv.org/html/2507.11783v3                                                                  | ✓ | ⏱: 0.23s 
+[COMPLETE] ● https://arxiv.org/html/2507.11783v3                                                                  | ✓ | ⏱: 2.51s 
+[action]        → [artifact art:c317dc10de77d576, 137959 bytes] preview: {   "status": 200,   "content_type": "text/markdown",   "length_bytes": 137162,   "text": "[ ![logo](https://services.dev.arxiv.org/html/static/a...   +art:c317dc10de77d576
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:611a4c6d — Query the knowledge base for how EEG foundation models perform on mental health downstream tasks
+[perception]    ○ g:007eb06e — Synthesise the information to answer how EEG foundation models perform on mental health downstream tasks  attach=['art:6b97fef63dcbd0e1', 'art:51cd5a8c1605b1f2', 'art:c317dc10de77d576']
+[attach]        art:6b97fef63dcbd0e1 (472 bytes)
+[attach]        art:51cd5a8c1605b1f2 (1569 bytes)
+[attach]        art:c317dc10de77d576 (137959 bytes)
+[decision]      Prompt size is large (43443 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: EEG foundation models (EEG-FMs) have emerged as a promising approach to address the limitations of traditional supervised deep learning in EEG analysis, such as the high cost of expert annotations and...
+
+─── iter 5 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:611a4c6d — Query the knowledge base for how EEG foundation models perform on mental health downstream tasks
+[perception]    ✓ g:007eb06e — Synthesise the information to answer how EEG foundation models perform on mental health downstream tasks
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: EEG foundation models (EEG-FMs) have emerged as a promising approach to address the limitations of traditional supervised deep learning in EEG analysis, such as the high cost of expert annotations and poor model robustness. These models leverage self-supervised learning (SSL)—typically through masked temporal sequence reconstruction—to learn generalizable, compressed latent representations of raw EEG data.
+
+Regarding their performance on downstream tasks, including mental health-related applications, the current landscape is characterized by the following:
+
+*   **Broad Task Applicability:** EEG-FMs have been evaluated across a wide range of downstream tasks, including motor imagery classification, seizure detection, sleep staging, and various clinical/mental health conditions such as ADHD, depression, and schizophrenia.
+*   **State-of-the-Art Potential:** Several models, such as REVE and CBraMod, have reported state-of-the-art performance across multiple downstream tasks. For instance, BrainWave has demonstrated strong performance (AUCs often ranging from 0.70 to 0.96) on diverse clinical datasets, including those for ADHD, depression, and Alzheimer’s disease.
+*   **Evaluation Heterogeneity:** A critical finding is that evaluation strategies remain highly heterogeneous. Models are assessed using various methods—including linear probing, fine-tuning, few-shot learning, and zero-shot transfer—often on different, non-standardized datasets. This inconsistency makes it difficult to directly compare models or fully assess their "off-the-shelf" utility.
+*   **Translational Challenges:** While promising, the real-world readiness of these models is still being established. Current research highlights a need for more standardized, rigorous benchmarks that go beyond common public datasets to better evaluate robustness, generalizability, and trustworthiness in clinical and real-world settings.
+
+In summary, while EEG-FMs show significant potential to improve performance on mental health and clinical downstream tasks by reducing reliance on large labeled datasets, their practical adoption is currently limited by inconsistent evaluation methodologies and a need for more robust, domain-expert-validated benchmarks.
+══════════════════════════════════════════════════════════════════════════════
+```
+
+### Query 4: (Semantic Recall)
+*   **Query**: *Among the papers I have indexed, explain why mental health classification is difficult using eeg?*
+*   **With RAG (Success)**:
+```text
+agent7> Among the papers I have indexed, explain why mental health classification is difficult using eeg?
+
+══════════════════════════════════════════════════════════════════════════════
+run c3bf58d9  ─  query: Among the papers I have indexed, explain why mental health classification is difficult using eeg?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:10:06] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:4050f333 — Query the knowledge base for challenges in mental health classification using EEG data
+[perception]    ○ g:c58e1e10 — Explain why mental health classification is difficult using EEG based on the indexed knowledge
+[decision]      TOOL_CALL: search_knowledge({"query": "challenges in mental health classification using EEG data", "k": 5})
+[05/30/26 12:10:10] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:25b56619c8d44fa5, 13469 bytes] preview: {   "id": "mem:3d09780e",   "descriptor": "Reasoning for the difficulty of mental health classification using EEG data",   "source": "user_query",...   +art:25b56619c8d44fa5
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:4050f333 — Query the knowledge base for challenges in mental health classification using EEG data
+[perception]    ○ g:c58e1e10 — Explain why mental health classification is difficult using EEG based on the indexed knowledge  attach=['art:25b56619c8d44fa5']
+[attach]        art:25b56619c8d44fa5 (13469 bytes)
+[decision]      Prompt size is large (26690 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: Mental health classification using EEG data is difficult due to several key factors identified in the indexed literature:
+
+*   **Subtle and Distributed Markers:** Psychiatric conditions, such as schiz...
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:4050f333 — Query the knowledge base for challenges in mental health classification using EEG data
+[perception]    ✓ g:c58e1e10 — Explain why mental health classification is difficult using EEG based on the indexed knowledge
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Mental health classification using EEG data is difficult due to several key factors identified in the indexed literature:
+
+*   **Subtle and Distributed Markers:** Psychiatric conditions, such as schizophrenia, are often characterized by subtle, distributed EEG markers that are difficult for models to capture without specialized training data or tailored inductive structures.
+*   **Signal Variability and Noise:** EEG data is inherently noisy and sensitive to clinical recording conditions. Preprocessing choices (such as filtering or Independent Component Analysis) can introduce biases or affect the reproducibility of results across different pipelines.
+*   **Limitations of Current Models:** Even advanced foundation models have struggled with clinical EEG tasks, sometimes failing to learn meaningful patterns beyond random guessing. This is partly because these models may not be capable of effectively utilizing previously unseen channels or generalizing across the diverse landscape of clinical EEG data.
+*   **Feature Extraction Challenges:** Effective feature extraction remains a significant hurdle. Traditional methods (like Fourier-based power analysis or wavelet transforms) may disregard critical temporal information, fail to capture non-phase-locked signals, or be computationally intensive and less robust to signal variability.
+*   **Data Heterogeneity:** There is a lack of standardization in how EEG data is acquired and formatted across different clinical settings, making it challenging to build models that generalize well across diverse subjects and conditions.
+══════════════════════════════════════════════════════════════════════════════
+```
+*   **Without RAG (Failure)**:
+```text
+agent7> Among the papers I have indexed, explain why mental health classification is difficult using eeg?
+
+══════════════════════════════════════════════════════════════════════════════
+run 447208b7  ─  query: Among the papers I have indexed, explain why mental health classification is difficult using eeg?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:17:11] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:c590f935 — Query the knowledge base for why mental health classification is difficult using EEG data
+[perception]    ○ g:85d6235c — Explain why mental health classification is difficult using EEG based on the retrieved knowledge
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "why mental health classification is difficult using EEG data"})
+[05/30/26 12:17:16] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:700edc64cdc53fa4, 749 bytes] preview: {   "id": "mem:f860bef5",   "descriptor": "Difficulty of mental health classification using EEG data",   "source": "user_query",   "chunk": "",   "m...   +art:700edc64cdc53fa4
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:c590f935 — Query the knowledge base for why mental health classification is difficult using EEG data
+[perception]    ○ g:85d6235c — Explain why mental health classification is difficult using EEG based on the retrieved knowledge  attach=['art:700edc64cdc53fa4']
+[attach]        art:700edc64cdc53fa4 (749 bytes)
+[decision]      TOOL_CALL: web_search({"query": "why mental health classification is difficult using EEG challenges limitations", "max_results": 5})
+[05/30/26 12:17:24] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[05/30/26 12:17:25] INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=why%20mental%20health%20classification%20is%2           
+                             0difficult%20using%20EEG%20challenges%20limitations 200                                                                                   
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://grokipedia.com/api/typeahead?query=why+mental+health+classification+is+difficult+using+EEG+challenges+limitations&limit           
+                             =1 200                                                                                                                                    
+[05/30/26 12:17:26] INFO     response:                                                                                                                       lib.rs:495
+                             https://yandex.com/search/site/?text=why+mental+health+classification+is+difficult+using+EEG+challenges+limitations&web=1&searc           
+                             hid=7929016 200                                                                                                                           
+[action]        → [artifact art:98aa21a6df6d155c, 1883 bytes] preview: {   "title": "Mental disorder - Wikipedia",   "url": "https://en.wikipedia.org/wiki/Mental_disorder",   "snippet": "The definition and classificati...   +art:98aa21a6df6d155c
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:c590f935 — Query the knowledge base for why mental health classification is difficult using EEG data
+[perception]    ○ g:85d6235c — Explain why mental health classification is difficult using EEG based on the retrieved knowledge  attach=['art:700edc64cdc53fa4', 'art:98aa21a6df6d155c']
+[attach]        art:700edc64cdc53fa4 (749 bytes)
+[attach]        art:98aa21a6df6d155c (1883 bytes)
+[decision]      TOOL_CALL: web_search({"query": "challenges difficulties mental health classification EEG brain signals limitations", "max_results": 5})
+[05/30/26 12:17:30] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=challenges%20difficulties%20mental%20health%2           
+                             0classification%20EEG%20brain%20signals%20limitations 200                                                                                 
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://grokipedia.com/api/typeahead?query=challenges+difficulties+mental+health+classification+EEG+brain+signals+limitations&l           
+                             imit=1 200                                                                                                                                
+[05/30/26 12:17:31] INFO     response: https://www.mojeek.com/search?q=challenges+difficulties+mental+health+classification+EEG+brain+signals+limitations    lib.rs:495
+                             200                                                                                                                                       
+[action]        → [artifact art:448837f84698d010, 1483 bytes] preview: {   "title": "Characterization of EEG signals revealing covert cognition in",   "url": "https://academic.oup.com/brain/article/141/5/1404/4944064",...   +art:448837f84698d010
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:c590f935 — Query the knowledge base for why mental health classification is difficult using EEG data
+[perception]    ○ g:85d6235c — Explain why mental health classification is difficult using EEG based on the retrieved knowledge  attach=['art:700edc64cdc53fa4', 'art:98aa21a6df6d155c', 'art:448837f84698d010']
+[attach]        art:700edc64cdc53fa4 (749 bytes)
+[attach]        art:98aa21a6df6d155c (1883 bytes)
+[attach]        art:448837f84698d010 (1483 bytes)
+[decision]      ANSWER: Based on the retrieved knowledge, mental health classification using EEG is difficult due to several key challenges:
+
+**1. Low Signal-to-Noise Ratio (SNR)**
+EEG signals are contaminated by various noi...
+
+─── iter 5 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:c590f935 — Query the knowledge base for why mental health classification is difficult using EEG data
+[perception]    ✓ g:85d6235c — Explain why mental health classification is difficult using EEG based on the retrieved knowledge  attach=['art:700edc64cdc53fa4', 'art:98aa21a6df6d155c', 'art:448837f84698d010']
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the retrieved knowledge, mental health classification using EEG is difficult due to several key challenges:
+
+**1. Low Signal-to-Noise Ratio (SNR)**
+EEG signals are contaminated by various noise sources including muscle activity, eye movements, and environmental interference. These artifacts can obscure the neural patterns relevant to mental health conditions, making it hard to extract clean, diagnostic features.
+
+**2. Limited Dataset Sizes**
+Mental health EEG datasets are typically small, with limited numbers of participants. This scarcity of training data makes it difficult for machine learning models to learn robust, generalizable patterns across diverse populations.
+
+**3. High Inter-Individual Variability**
+EEG signals vary significantly between individuals due to anatomical differences, skull thickness, and unique brain organization. What constitutes a "normal" or "abnormal" pattern for one person may differ substantially for another, complicating universal classification rules.
+
+**4. Complex and Heterogeneous Nature of Mental Disorders**
+Mental health conditions themselves are poorly defined and highly heterogeneous. The same diagnostic label (e.g., depression) may encompass different underlying neural mechanisms across patients, while different disorders may share overlapping EEG signatures.
+
+**5. Modest Signal Differences**
+Research shows that while EEG signals may vary among patients with mental health conditions, the differences compared to healthy controls are often modest and subtle, requiring sophisticated analysis techniques that may not reliably capture the diagnostic information.
+
+**6. Task and Context Dependence**
+EEG patterns are highly dependent on the cognitive task or mental state during recording. Different experimental paradigms can yield different results, making standardization and comparison across studies challenging.
+══════════════════════════════════════════════════════════════════════════════
+```
+
+### Query 5:
+*   **Query**: *What are the major challenges in training eeg foundation models compared to llms based on text?*
+*   **With RAG (Success)**:
+```text
+agent7> What are the major challenges in training eeg foundation models compared to llms based on text?
+
+══════════════════════════════════════════════════════════════════════════════
+run a0cb5b50  ─  query: What are the major challenges in training eeg foundation models compared to llms based on text?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:10:53] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:a7bc3fa5 — Query the knowledge base for major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:14f95601 — Summarise the major challenges in training EEG foundation models compared to text-based LLMs
+[decision]      TOOL_CALL: search_knowledge({"k": 5, "query": "major challenges training EEG foundation models compared to text-based large language models"})
+[05/30/26 12:10:57] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:f8e9a5973eb74a66, 14631 bytes] preview: {   "id": "mem:1e5e0259",   "descriptor": "Comparing major challenges of EEG foundation models versus text-based LLMs",   "source": "user_query", ...   +art:f8e9a5973eb74a66
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:a7bc3fa5 — Query the knowledge base for major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:14f95601 — Summarise the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:f8e9a5973eb74a66']
+[attach]        art:f8e9a5973eb74a66 (14631 bytes)
+[decision]      Prompt size is large (27818 chars) — bypassing auto-router to direct Gemini (provider='g')
+[decision]      ANSWER: Training EEG foundation models (EFMs) presents distinct challenges compared to text-based Large Language Models (LLMs), primarily due to the nature of the data and the complexity of neurophysiological...
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:a7bc3fa5 — Query the knowledge base for major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ✓ g:14f95601 — Summarise the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:f8e9a5973eb74a66']
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Training EEG foundation models (EFMs) presents distinct challenges compared to text-based Large Language Models (LLMs), primarily due to the nature of the data and the complexity of neurophysiological signals:
+
+*   **Heterogeneity and Montage Variability:** Unlike text, which has a standardized structure, EEG data is highly heterogeneous. Different studies use varying electrode montages (number and placement of sensors), making it difficult to train models that generalize across different hardware configurations and recording setups.
+*   **Lack of Explicit Brain State Disentanglement:** EEG signals simultaneously reflect diverse, overlapping brain processes (e.g., motor activity, emotion, attention). Standard single-encoder architectures often fail to disentangle these states, limiting the model's ability to adapt to downstream tasks that require isolating specific neurophysiological processes.
+*   **Spatial and Temporal Complexity:** While LLMs excel at sequential text processing, EEG data requires modeling complex, non-linear spatial interactions between electrodes and brain regions alongside temporal dynamics. Many current models struggle to explicitly capture these spatial dependencies, often relying on implicit approximations that sacrifice flexibility.
+*   **Data Scarcity and Subject Variability:** Despite the emergence of large-scale EEG corpora, high-quality, annotated data remains limited compared to the massive, diverse text datasets available for LLMs. Furthermore, significant inter-subject variability in brain activity makes it difficult to learn robust, universal representations that perform consistently across different individuals.
+*   **Downstream Adaptation Constraints:** Many existing EFMs use a single, shared encoder, which restricts flexibility during downstream adaptation. Unlike LLMs that can be fine-tuned for various tasks, complex EEG tasks often involve interacting processes that require more specialized, modular, or "mixture-of-experts" style adaptation architectures to effectively leverage complementary signals.
+══════════════════════════════════════════════════════════════════════════════
+```
+*   **Without RAG (Failure)**:
+```text
+agent7> What are the major challenges in training eeg foundation models compared to llms based on text?
+
+══════════════════════════════════════════════════════════════════════════════
+run e7a803c5  ─  query: What are the major challenges in training eeg foundation models compared to llms based on text?
+══════════════════════════════════════════════════════════════════════════════
+[05/30/26 12:18:05] INFO     Processing request of type ListToolsRequest                                                                                  server.py:727
+[mcp] loaded 11 tools: ['web_search', 'fetch_url', 'get_time', 'currency_convert', 'read_file', 'list_dir', 'create_file', 'update_file', 'edit_file', 'index_document', 'search_knowledge']
+
+─── iter 1 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ○ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs
+[decision]      TOOL_CALL: search_knowledge({"query": "major challenges training EEG foundation models compared to text-based LLMs", "k": 5})
+[05/30/26 12:18:11] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+                    INFO     HTTP Request: GET http://localhost:8107/v1/routers "HTTP/1.1 200 OK"                                                       _client.py:1025
+                    INFO     HTTP Request: POST http://localhost:8107/v1/embed "HTTP/1.1 200 OK"                                                        _client.py:1025
+[action]        → [artifact art:ad50d89da727ec86, 771 bytes] preview: {   "id": "mem:041959a4",   "descriptor": "Comparison of challenges in training EEG foundation models versus text-based LLMs",   "source": "user_que...   +art:ad50d89da727ec86
+
+─── iter 2 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:ad50d89da727ec86']
+[attach]        art:ad50d89da727ec86 (771 bytes)
+[decision]      TOOL_CALL: web_search({"query": "challenges training EEG foundation models compared to text-based LLMs", "max_results": 5})
+[05/30/26 12:18:15] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[05/30/26 12:18:16] INFO     response:                                                                                                                       lib.rs:495
+                             https://en.wikipedia.org/w/api.php?action=opensearch&profile=fuzzy&limit=1&search=challenges%20training%20EEG%20foundation%20mo           
+                             dels%20compared%20to%20text-based%20LLMs 200                                                                                              
+                    INFO     response:                                                                                                                       lib.rs:495
+                             https://grokipedia.com/api/typeahead?query=challenges+training+EEG+foundation+models+compared+to+text-based+LLMs&limit=1 200              
+[05/30/26 12:18:17] INFO     response:                                                                                                                       lib.rs:495
+                             https://search.yahoo.com/search;_ylt=kONoih-pwenNY-ylT1wJgjMJ;_ylu=TLACZZNQzYXCAvt6z167Uf8oPnJB42FIk-wo6zFk-PRkMec?p=challenges           
+                             +training+EEG+foundation+models+compared+to+text-based+LLMs 200                                                                           
+[action]        → [artifact art:d746cf3057f5355e, 2087 bytes] preview: {   "title": "EEG Foundation Models: Progresses, Benchmarking, and Open ...",   "url": "https://arxiv.org/pdf/2601.17883",   "snippet": "We compreh...   +art:d746cf3057f5355e
+
+─── iter 3 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:ad50d89da727ec86']
+[attach]        art:ad50d89da727ec86 (771 bytes)
+[decision]      TOOL_CALL: fetch_url({"url": "https://arxiv.org/pdf/2601.17883"})
+[05/30/26 12:18:20] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[INIT].... → Crawl4AI 0.8.6 
+[FETCH]... ↓ https://arxiv.org/pdf/2601.17883                                                                     | ✓ | ⏱: 1.45s 
+[SCRAPE].. ◆ https://arxiv.org/pdf/2601.17883                                                                     | ✓ | ⏱: 0.00s 
+[COMPLETE] ● https://arxiv.org/pdf/2601.17883                                                                     | ✗ | ⏱: 1.46s 
+[action]        → {   "status": 200,   "content_type": "text/markdown",   "length_bytes": 1,   "text": "\n" }
+
+─── iter 4 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:ad50d89da727ec86']
+[attach]        art:ad50d89da727ec86 (771 bytes)
+[decision]      TOOL_CALL: web_search({"query": "challenges training EEG foundation models compared to text LLMs data scarcity", "max_results": 5})
+[05/30/26 12:18:26] INFO     Processing request of type CallToolRequest                                                                                   server.py:727
+[action]        → [artifact art:ae07fa13990b0226, 8904 bytes] preview: {   "title": "EEG Foundation Models: Unlocking the Next Generation of Neurotechnology - BrainAccess",   "url": "https://www.brainaccess.ai/eeg-foun...   +art:ae07fa13990b0226
+
+─── iter 5 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ○ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs  attach=['art:ad50d89da727ec86', 'art:d746cf3057f5355e', 'art:ae07fa13990b0226']
+[attach]        art:ad50d89da727ec86 (771 bytes)
+[attach]        art:d746cf3057f5355e (2087 bytes)
+[attach]        art:ae07fa13990b0226 (8904 bytes)
+[decision]      ANSWER: Based on the search results, here are the major challenges in training EEG foundation models compared to text-based LLMs:
+
+## Data Scarcity and Scale
+- **Smaller datasets**: EEG datasets are typically...
+
+─── iter 6 ─────────────────────────────────────────────
+[memory.read]   8 hits
+[perception]    ✓ g:1c7922fb — Query the knowledge base for the major challenges in training EEG foundation models compared to text-based LLMs
+[perception]    ✓ g:502476ad — Answer the major challenges in training EEG foundation models compared to text-based LLMs
+
+[done] all 2 goals satisfied
+
+══════════════════════════════════════════════════════════════════════════════
+FINAL: Based on the search results, here are the major challenges in training EEG foundation models compared to text-based LLMs:
+
+## Data Scarcity and Scale
+- **Smaller datasets**: EEG datasets are typically much smaller than the massive text corpora used to train LLMs
+- **Limited labeled data**: Deep learning models require substantial training data, but high-quality, multi-channel EEG data under controlled experimental conditions is scarce
+- **Lack of datasets**: Many existing approaches remain confined to single-task, single-dataset settings, limiting scalability and robustness
+
+## Data Heterogeneity and Quality
+- **High heterogeneity**: EEG datasets vary widely in quality, structure, and acquisition protocols across different sources
+- **Noisy signals**: EEG signals are inherently noisy and contaminated by artifacts (eye movements, muscle activity, external interference)
+- **Real-world variability**: Extracting clean patterns is especially difficult in real-world or mobile environments
+
+## Subject Variability
+- **Inter-subject variability**: Significant differences between individuals complicate generalization across subjects
+- **Intra-subject variability**: Signals vary within the same subject across different recording sessions
+- **Individual differences**: Diverse EEG signal interpretations lead to increased prediction variance
+
+## Structural Complexity
+- **Spatial-temporal dependencies**: EEG signals have unique structural characteristics with heterogeneous spatial and temporal dependencies
+- **Multi-channel complexity**: Existing models often overlook inter-channel relationships while focusing primarily on temporal dynamics
+
+## Evaluation and Standardization
+- **Limited benchmarks**: Few standardized benchmarks exist for comprehensive evaluation across tasks and subjects
+- **Domain generalization**: Models struggle to generalize across different recording conditions and equipment
+══════════════════════════════════════════════════════════════════════════════
+
+```
