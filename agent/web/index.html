@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Control Hub</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Main stylesheet links to static server folder -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="backdrop-glow"></div>
+    <div class="app-container">
+        <!-- Main Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">▲</span>
+                <div class="logo-text">
+                    <h1>Agent Control Hub</h1>
+                    <p class="subtitle">RAG Agent Console</p>
+                </div>
+            </div>
+            <div class="status-panel">
+                <div class="status-item">
+                    <span class="status-label">LLM Gateway</span>
+                    <span id="gateway-status" class="status-badge offline">
+                        <span class="pulse-dot"></span>
+                        <span class="badge-text">Checking...</span>
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="tab-convert">
+                <span class="tab-icon">🗂</span> Document Converter
+            </button>
+            <button class="tab-btn" data-tab="tab-index">
+                <span class="tab-icon">🔍</span> Memory Indexer
+            </button>
+            <button class="tab-btn" data-tab="tab-agent">
+                <span class="tab-icon">🧠</span> Agent Terminal
+            </button>
+        </nav>
+
+        <!-- Main Panels Frame -->
+        <main class="content-frame">
+            
+            <!-- PANEL 1: PDF to Markdown Converter -->
+            <section id="tab-convert" class="tab-content active">
+                <div class="panel-header">
+                    <h2>Document PDF-to-Markdown Converter</h2>
+                    <p>Recursively traverses a directory, identifies PDF files, and converts them to standard Markdown using Microsoft's MarkItDown library.</p>
+                </div>
+                <div class="panel-body grid-layout">
+                    <div class="control-box">
+                        <form id="convert-form" class="glass-form">
+                            <div class="input-group">
+                                <label for="convert-input">Input PDF Directory</label>
+                                <input type="text" id="convert-input" required placeholder="e.g. sandbox/docs/Exported Items/files/" value="sandbox/docs/Exported Items/files/">
+                                <span class="help-text">Absolute path or path relative to the agent folder.</span>
+                            </div>
+                            <div class="input-group">
+                                <label for="convert-output">Output Markdown Directory (Optional)</label>
+                                <input type="text" id="convert-output" placeholder="e.g. sandbox/docs/markdown" value="sandbox/docs/markdown">
+                                <span class="help-text">If left blank, Markdown will be saved next to the source PDFs.</span>
+                            </div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="convert-overwrite">
+                                    <span class="checkmark"></span>
+                                    Overwrite existing Markdown outputs
+                                </label>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" id="convert-btn" class="glow-button violet">
+                                    <span>Start Batch Conversion</span>
+                                </button>
+                                <button type="button" id="convert-stop-btn" class="glow-button red hidden">
+                                    <span>Stop Process</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="log-box">
+                        <div class="log-header">
+                            <span>Execution Log</span>
+                            <button class="clear-log-btn" onclick="clearLog('convert-log')">Clear</button>
+                        </div>
+                        <pre id="convert-log" class="terminal-log">Waiting to launch conversion process...</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 2: Markdown Indexer -->
+            <section id="tab-index" class="tab-content">
+                <div class="panel-header">
+                    <h2>Knowledge Vector Indexer</h2>
+                    <p>Ingests Markdown documents under a selected directory, chunks the text, computes embeddings using the Gateway embed endpoint, and persists them into the FAISS vector database.</p>
+                </div>
+                <div class="panel-body grid-layout">
+                    <div class="control-box">
+                        <form id="index-form" class="glass-form">
+                            <div class="input-group">
+                                <label for="index-input">Markdown Input Directory</label>
+                                <input type="text" id="index-input" required placeholder="e.g. sandbox/docs/markdown" value="sandbox/docs/markdown">
+                                <span class="help-text">Directory to scan recursively for .md files. Must reside under the sandbox.</span>
+                            </div>
+                            <div class="sandbox-warning">
+                                <span class="warning-icon">⚠</span>
+                                <span class="warning-text">Paths must be situated inside the <strong>sandbox/</strong> directory to enable absolute-to-relative vector resolution.</span>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" id="index-btn" class="glow-button cyan">
+                                    <span>Ingest to FAISS Memory</span>
+                                </button>
+                                <button type="button" id="index-stop-btn" class="glow-button red hidden">
+                                    <span>Stop Process</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="log-box">
+                        <div class="log-header">
+                            <span>Indexing Logs</span>
+                            <button class="clear-log-btn" onclick="clearLog('index-log')">Clear</button>
+                        </div>
+                        <pre id="index-log" class="terminal-log">Waiting to launch indexer...</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PANEL 3: Agent Runner -->
+            <section id="tab-agent" class="tab-content">
+                <div class="panel-header">
+                    <h2>Agent Execution & Cognitive Tracing</h2>
+                    <p>Submit prompts to the Session 7 agent cognitive loop. You can view the vector retrieval queries, goals analysis, tool actions, and intermediate decisions in real time.</p>
+                </div>
+                <div class="panel-body flex-layout">
+                    <div class="agent-controls">
+                        <form id="agent-form" class="glass-form">
+                            <div class="input-group">
+                                <label for="agent-query">Enter your query for the Agent</label>
+                                <textarea id="agent-query" required rows="3" placeholder="e.g. Find facts about Claude Shannon, his birth date, and three key contributions to information theory."></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button type="submit" id="agent-btn" class="glow-button pink">
+                                    <span>Execute Agent</span>
+                                </button>
+                                <button type="button" id="agent-stop-btn" class="glow-button red hidden">
+                                    <span>Stop Process</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Final Answer Glass Panel -->
+                    <div id="answer-panel" class="answer-panel hidden">
+                        <div class="answer-header">
+                            <span class="answer-icon">✨</span>
+                            <h3>Final Answer</h3>
+                        </div>
+                        <div id="agent-answer" class="answer-content">
+                            <!-- Answer text inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Split Console Logging and Tracing -->
+                    <div class="agent-workspace">
+                        <div class="log-box flex-grow">
+                            <div class="log-header">
+                                <span>Cognitive Step Tracing</span>
+                                <button class="clear-log-btn" onclick="clearLog('agent-log')">Clear</button>
+                            </div>
+                            <div id="agent-trace-container" class="trace-container">
+                                <!-- Tracing step objects inserted dynamically -->
+                                <pre id="agent-log" class="terminal-log">Enter a query above to launch the agent cognitive loop...</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <footer class="app-footer">
+            <p>Made with ❤️ by Krishna &bull; Local Workspace Server Mode</p>
+        </footer>
+    </div>
+
+    <!-- Script references -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
